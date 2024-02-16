@@ -195,24 +195,58 @@ namespace ROOT
          // Processing code tag: "{ code }"
          ///////////////////////////////////////////////////////////////////////
 
+         // if( key == "code" ) {
+         //    if( command[1] != '{' ) {
+         //       error_string = "Parsing error while processing key: code\n";
+         //       error_string += "Expected \"{ at the beginning of the value.";
+         //       return false;
+         //    }
+         //    l = command.find( "}\"" );
+         //    if( l == std::string::npos ) {
+         //       std::regex white_spaced_sep("}[ 	]*\"");
+         //       std::smatch match;
+         //       if (std::regex_search(command, match, white_spaced_sep) && match.size() == 1) {
+         //          l = command.find( match[0] );
+         //          command.replace(l, match[0].length(), "}\"");
+         //       } else {
+         //          error_string = "Parsing error while processing key: \"" + key + "\"\n";
+         //          error_string += "Expected }\" at the end of the value.";
+         //          return false;
+         //       }
+         //    }
+         //    auto rawCode = command.substr( 2, l-2 );
+         //    RemoveEscapeSequences(rawCode);
+         //    result[key] = rawCode;
+         //    ++l;
+         // }
          if( key == "code" ) {
             if( command[1] != '{' ) {
                error_string = "Parsing error while processing key: code\n";
                error_string += "Expected \"{ at the beginning of the value.";
                return false;
             }
-            l = command.find( "}\"" );
+            l = command.find( "}" );
             if( l == std::string::npos ) {
-               std::regex white_spaced_sep("}[ 	]*\"");
-               std::smatch match;
-               if (std::regex_search(command, match, white_spaced_sep) && match.size() == 1) {
-                  l = command.find( match[0] );
-                  command.replace(l, match[0].length(), "}\"");
-               } else {
-                  error_string = "Parsing error while processing key: \"" + key + "\"\n";
-                  error_string += "Expected }\" at the end of the value.";
-                  return false;
+               error_string = "Parsing error while processing key: \"" + key + "\"\n";
+               error_string += "Expected } at the end of the value.";
+               return false;
+            }
+            if(command.back() != '"'){
+               error_string = "Parsing error while processing key: \"" + key + "\"\n";
+               error_string += "Expected \" at the end of the value.";
+               return false;
+            }
+            bool ok = true;
+            for(int i = l + 1; i < (int)command.length() - 1; ++i){
+               if(!isspace(command[i])){
+                  ok = false;
+                  break;
                }
+            }
+            if(!ok){
+               error_string = "Parsing error while processing key: \"" + key + "\"\n";
+               error_string += "Only trailing whitespace characters allowed after closing } character.";
+               return false;
             }
             auto rawCode = command.substr( 2, l-2 );
             RemoveEscapeSequences(rawCode);
